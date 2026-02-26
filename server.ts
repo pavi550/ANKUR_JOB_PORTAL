@@ -5,12 +5,44 @@ import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import multer from "multer";
+import fs from "fs";
 
 const db = new Database("jobs.db");
 const JWT_SECRET = process.env.JWT_SECRET || "ankur-secret-key";
+
+// Ensure uploads directory exists
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+// Multer config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [".pdf", ".doc", ".docx"];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only .pdf, .doc and .docx files are allowed"));
+    }
+  },
+});
 
 // Initialize database
 db.exec(`
@@ -43,9 +75,16 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER UNIQUE NOT NULL,
     name TEXT NOT NULL,
+    photo_url TEXT,
+    contact_details TEXT,
+    location TEXT,
     skills TEXT,
     experience TEXT,
+    education TEXT,
     resume_url TEXT,
+    portfolio_url TEXT,
+    linkedin_url TEXT,
+    github_url TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
   );
@@ -70,6 +109,16 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+  app.use("/uploads", express.static(uploadsDir));
+
+  // Upload Route
+  app.post("/api/upload/resume", authenticateToken, upload.single("resume"), (req: any, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl });
+  });
 
   // Auth Routes
   app.post("/api/auth/register", async (req, res) => {
@@ -159,10 +208,24 @@ async function startServer() {
   });
 
   app.put("/api/profile/me", authenticateToken, (req: any, res) => {
-    const { name, skills, experience, resume_url, is_public } = req.body;
+    const { 
+      name, photo_url, contact_details, location, 
+      skills, experience, education, resume_url, 
+      portfolio_url, linkedin_url, github_url, is_public 
+    } = req.body;
     try {
-      db.prepare("UPDATE profiles SET name = ?, skills = ?, experience = ?, resume_url = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?")
-        .run(name, skills, experience, resume_url, req.user.id);
+      db.prepare(`
+        UPDATE profiles SET 
+          name = ?, photo_url = ?, contact_details = ?, location = ?,
+          skills = ?, experience = ?, education = ?, resume_url = ?,
+          portfolio_url = ?, linkedin_url = ?, github_url = ?,
+          updated_at = CURRENT_TIMESTAMP 
+        WHERE user_id = ?
+      `).run(
+        name, photo_url, contact_details, location,
+        skills, experience, education, resume_url,
+        portfolio_url, linkedin_url, github_url, req.user.id
+      );
       
       if (is_public !== undefined) {
         db.prepare("UPDATE users SET is_public = ? WHERE id = ?").run(is_public ? 1 : 0, req.user.id);
@@ -170,6 +233,7 @@ async function startServer() {
       
       res.json({ message: "Profile updated" });
     } catch (error) {
+      console.error("Update profile error:", error);
       res.status(500).json({ error: "Failed to update profile" });
     }
   });

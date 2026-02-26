@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff } from "lucide-react";
+import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff, Globe, Linkedin, Github, GraduationCap, Phone, Camera, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI } from "@google/genai";
 
@@ -22,9 +22,16 @@ interface Job {
 interface Profile {
   name: string;
   email: string;
+  photo_url: string;
+  contact_details: string;
+  location: string;
   skills: string;
   experience: string;
+  education: string;
   resume_url: string;
+  portfolio_url: string;
+  linkedin_url: string;
+  github_url: string;
   is_public: boolean;
 }
 
@@ -51,6 +58,7 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [magicLink, setMagicLink] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"jobs" | "profile">("jobs");
@@ -65,9 +73,16 @@ export default function App() {
   const [profile, setProfile] = useState<Profile>({
     name: "",
     email: "",
+    photo_url: "",
+    contact_details: "",
+    location: "",
     skills: "",
     experience: "",
+    education: "",
     resume_url: "",
+    portfolio_url: "",
+    linkedin_url: "",
+    github_url: "",
     is_public: true,
   });
 
@@ -118,7 +133,11 @@ export default function App() {
     setToken(null);
     setUser(null);
     localStorage.removeItem("token");
-    setProfile({ name: "", email: "", skills: "", experience: "", resume_url: "", is_public: true });
+    setProfile({ 
+      name: "", email: "", photo_url: "", contact_details: "", location: "",
+      skills: "", experience: "", education: "", resume_url: "",
+      portfolio_url: "", linkedin_url: "", github_url: "", is_public: true 
+    });
   };
 
   const fetchMyProfile = async () => {
@@ -132,9 +151,16 @@ export default function App() {
         setProfile({
           name: data.name || "",
           email: data.email || "",
+          photo_url: data.photo_url || "",
+          contact_details: data.contact_details || "",
+          location: data.location || "",
           skills: data.skills || "",
           experience: data.experience || "",
+          education: data.education || "",
           resume_url: data.resume_url || "",
+          portfolio_url: data.portfolio_url || "",
+          linkedin_url: data.linkedin_url || "",
+          github_url: data.github_url || "",
           is_public: data.is_public === 1,
         });
         setUser({ id: data.user_id, username: data.username, email: data.email, is_public: data.is_public });
@@ -143,6 +169,38 @@ export default function App() {
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
+    }
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    setIsUploading(true);
+    try {
+      const response = await fetch("/api/upload/resume", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile({ ...profile, resume_url: data.url });
+      } else {
+        const error = await response.json();
+        alert(error.error || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("An error occurred during upload");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -806,34 +864,176 @@ export default function App() {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveProfile} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSaveProfile} className="space-y-6">
+                {/* Basic Details Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Basic Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          required
+                          type="text"
+                          placeholder="John Doe"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.name}
+                          onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Photo URL</label>
+                      <div className="relative">
+                        <Camera className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.photo_url}
+                          onChange={(e) => setProfile({ ...profile, photo_url: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Contact Details</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="Phone or secondary email"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.contact_details}
+                          onChange={(e) => setProfile({ ...profile, contact_details: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Location</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="City, Country"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.location}
+                          onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Details Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Professional Details</h3>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Skills (comma separated)</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        required
-                        type="text"
-                        placeholder="John Doe"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                      <Award className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                      <textarea
+                        rows={2}
+                        placeholder="React, TypeScript, Node.js, UI Design..."
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                        value={profile.skills}
+                        onChange={(e) => setProfile({ ...profile, skills: e.target.value })}
                       />
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Education</label>
+                      <div className="relative">
+                        <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="Degree, University"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.education}
+                          onChange={(e) => setProfile({ ...profile, education: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Resume (PDF/DOC)</label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <input
+                            type="url"
+                            placeholder="https://..."
+                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            value={profile.resume_url}
+                            onChange={(e) => setProfile({ ...profile, resume_url: e.target.value })}
+                          />
+                        </div>
+                        <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 p-3 rounded-xl transition-colors flex items-center justify-center min-w-[48px]">
+                          {isUploading ? <Loader2 className="animate-spin text-indigo-600" size={20} /> : <Upload className="text-gray-600" size={20} />}
+                          <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeUpload} disabled={isUploading} />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        required
-                        readOnly
-                        type="email"
-                        placeholder="john@example.com"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
-                        value={profile.email}
-                      />
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Experience Summary (optional)</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Briefly describe your work history..."
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                      value={profile.experience}
+                      onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Social & Links Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Social & Links</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Portfolio</label>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="url"
+                          placeholder="Website"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.portfolio_url}
+                          onChange={(e) => setProfile({ ...profile, portfolio_url: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">LinkedIn</label>
+                      <div className="relative">
+                        <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="url"
+                          placeholder="Profile"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.linkedin_url}
+                          onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">GitHub</label>
+                      <div className="relative">
+                        <Github className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="url"
+                          placeholder="Profile"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={profile.github_url}
+                          onChange={(e) => setProfile({ ...profile, github_url: e.target.value })}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -857,51 +1057,9 @@ export default function App() {
                   </button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Skills (comma separated)</label>
-                  <div className="relative">
-                    <Award className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-                    <textarea
-                      rows={2}
-                      placeholder="React, TypeScript, Node.js, UI Design..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
-                      value={profile.skills}
-                      onChange={(e) => setProfile({ ...profile, skills: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Experience Summary</label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
-                    <textarea
-                      rows={3}
-                      placeholder="Briefly describe your work history..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
-                      value={profile.experience}
-                      onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Resume Link (Google Drive, Dropbox, etc.)</label>
-                  <div className="relative">
-                    <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      value={profile.resume_url}
-                      onChange={(e) => setProfile({ ...profile, resume_url: e.target.value })}
-                    />
-                  </div>
-                </div>
-
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] mt-4 flex items-center justify-center gap-2"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <Save size={20} />
                   Save Profile
