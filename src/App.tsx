@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff, Globe, Linkedin, Github, GraduationCap, Phone, Camera, Upload, Twitter, Instagram, Shield, Trash2, Ban, RefreshCw, CheckCircle2, Users, TrendingUp, Link2Off, Eraser } from "lucide-react";
+import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff, Globe, Linkedin, Github, GraduationCap, Phone, Camera, Upload, Twitter, Instagram, Shield, Trash2, Ban, RefreshCw, CheckCircle2, Users, TrendingUp, Link2Off, Eraser, Link } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI } from "@google/genai";
 
@@ -613,123 +613,80 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans">
+    <div className="min-h-screen bg-[#F8F9FB] text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
       {/* Header */}
-      <header className="bg-white border-b border-black/5 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-6 w-full md:w-auto">
-            <div className="flex items-center gap-2">
-              <div className="bg-indigo-600 p-2 rounded-lg shrink-0">
+      <header className="glass-panel sticky top-0 z-50 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-8">
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center gap-2.5 cursor-pointer"
+              onClick={() => setActiveTab("jobs")}
+            >
+              <div className="bg-indigo-600 p-2.5 rounded-2xl shadow-lg shadow-indigo-500/30">
                 <Briefcase className="text-white w-6 h-6" />
               </div>
-              <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">ANKUR JOB Portal</h1>
-            </div>
+              <h1 className="text-xl font-display font-bold tracking-tight text-slate-900">ANKUR <span className="text-indigo-600">JOBS</span></h1>
+            </motion.div>
             
-            <nav className="hidden sm:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-2xl border border-slate-200/50">
               <button 
                 onClick={() => setActiveTab("jobs")}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "jobs" ? "bg-indigo-50 text-indigo-600" : "text-gray-500 hover:bg-gray-50"}`}
+                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "jobs" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               >
-                Jobs
+                Find Jobs
               </button>
               <button 
                 onClick={() => setIsProfileModalOpen(true)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all text-gray-500 hover:bg-gray-50`}
+                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all text-slate-500 hover:text-slate-700`}
               >
                 My Profile
               </button>
               {user?.role === 'admin' && (
                 <button 
                   onClick={() => setActiveTab("admin")}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "admin" ? "bg-red-50 text-red-600" : "text-gray-500 hover:bg-gray-50"}`}
+                  className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "admin" ? "bg-red-50 text-red-600" : "text-slate-500 hover:text-slate-700"}`}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <Shield size={14} />
-                    Admin
-                  </div>
+                  Admin Panel
                 </button>
-              )}
-              {user?.role === 'admin' && (
-                <div className="flex items-center bg-gray-100 p-1 rounded-xl ml-4">
-                  <button 
-                    onClick={() => { setViewMode("user"); setActiveTab("jobs"); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "user" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                  >
-                    User View
-                  </button>
-                  <button 
-                    onClick={() => { setViewMode("admin"); setActiveTab("admin"); }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "admin" ? "bg-white text-red-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                  >
-                    Admin View
-                  </button>
-                </div>
               )}
             </nav>
           </div>
 
-          <div className="flex items-center gap-3 w-full max-w-2xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Job title or company..."
-                className="w-full pl-10 pr-4 py-2 rounded-xl border border-black/5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="relative flex-1 hidden sm:block">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Location..."
-                className="w-full pl-10 pr-4 py-2 rounded-xl border border-black/5 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                value={locationQuery}
-                onChange={(e) => setLocationQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-4">
             {token ? (
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col items-end hidden sm:flex">
-                  <span className="text-sm font-bold text-gray-900">{user?.username}</span>
-                  <span className="text-[10px] text-gray-500">{user?.email}</span>
+              <div className="flex items-center gap-4">
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-sm font-bold text-slate-900">{user?.username}</span>
+                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{user?.role}</span>
                 </div>
-                <button
+                <button 
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 hover:bg-indigo-100 transition-all"
+                >
+                  <User size={20} />
+                </button>
+                <button 
                   onClick={handleLogout}
-                  className="p-2 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all"
+                  className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                   title="Logout"
                 >
                   <LogOut size={20} />
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => {
-                  setAuthMode("login");
-                  setIsAuthModalOpen(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-all"
+              <button 
+                onClick={() => { setAuthMode("login"); setIsAuthModalOpen(true); }}
+                className="btn-primary"
               >
-                <LogIn size={18} />
-                Login
+                Sign In
               </button>
             )}
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-sm active:scale-95 w-full md:w-auto justify-center"
-            >
-              <Plus size={20} />
-              Post a Job
-            </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {activeTab === "admin" && user?.role === 'admin' ? (
           <div className="space-y-8">
             <div className="flex justify-between items-center">
@@ -754,65 +711,53 @@ export default function App() {
               </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="glass-panel p-6 rounded-3xl">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-600">
                     <Users size={24} />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{adminStats?.totalUsers || 0}</div>
-                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Users</div>
+                    <div className="text-sm font-medium text-slate-500">Total Users</div>
+                    <div className="text-2xl font-bold text-slate-900">{adminStats?.totalUsers || 0}</div>
                   </div>
                 </div>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+              <div className="glass-panel p-6 rounded-3xl">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="bg-emerald-50 p-3 rounded-2xl text-emerald-600">
                     <Briefcase size={24} />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{adminStats?.totalJobs || 0}</div>
-                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Jobs</div>
+                    <div className="text-sm font-medium text-slate-500">Total Jobs</div>
+                    <div className="text-2xl font-bold text-slate-900">{adminStats?.totalJobs || 0}</div>
                   </div>
                 </div>
               </div>
-              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-red-50 text-red-600 rounded-2xl">
-                    <Ban size={24} />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{adminStats?.suspendedUsers || 0}</div>
-                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Suspended</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+              <div className="glass-panel p-6 rounded-3xl">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="bg-orange-50 p-3 rounded-2xl text-orange-600">
                     <TrendingUp size={24} />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">{adminStats?.recentJobs || 0}</div>
-                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">New (7d)</div>
+                    <div className="text-sm font-medium text-slate-500">Avg Salary</div>
+                    <div className="text-2xl font-bold text-slate-900">₹{adminStats?.avgSalary || 'N/A'}</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 border-b border-black/5">
+            <div className="flex items-center gap-6 border-b border-slate-200">
               <button
                 onClick={() => setAdminSubTab("users")}
-                className={`pb-4 px-2 text-sm font-bold transition-all relative ${adminSubTab === "users" ? "text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                className={`pb-4 px-2 text-sm font-bold transition-all relative ${adminSubTab === "users" ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"}`}
               >
                 Users Management
                 {adminSubTab === "users" && <motion.div layoutId="adminSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
               </button>
               <button
                 onClick={() => setAdminSubTab("jobs")}
-                className={`pb-4 px-2 text-sm font-bold transition-all relative ${adminSubTab === "jobs" ? "text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+                className={`pb-4 px-2 text-sm font-bold transition-all relative ${adminSubTab === "jobs" ? "text-indigo-600" : "text-slate-400 hover:text-slate-600"}`}
               >
                 Jobs Moderation
                 {adminSubTab === "jobs" && <motion.div layoutId="adminSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
@@ -820,58 +765,58 @@ export default function App() {
             </div>
 
             {adminSubTab === "users" ? (
-              <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
+              <div className="glass-panel rounded-3xl overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-gray-50 border-b border-black/5">
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Joined</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">User</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Joined</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-black/5">
+                    <tbody className="divide-y divide-slate-100">
                       {adminUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
+                        <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                              <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold border border-indigo-100">
                                 {u.username[0].toUpperCase()}
                               </div>
                               <div>
-                                <div className="font-bold text-gray-900">{u.username}</div>
-                                <div className="text-xs text-gray-500">{u.email}</div>
+                                <div className="font-bold text-slate-900">{u.username}</div>
+                                <div className="text-xs text-slate-400">{u.email}</div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                               {u.role}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             {u.is_suspended ? (
-                              <span className="flex items-center gap-1 text-red-500 text-xs font-bold">
-                                <Ban size={12} />
+                              <span className="flex items-center gap-1.5 text-red-500 text-xs font-bold">
+                                <Ban size={14} />
                                 Suspended
                               </span>
                             ) : (
-                              <span className="flex items-center gap-1 text-emerald-500 text-xs font-bold">
-                                <CheckCircle2 size={12} />
+                              <span className="flex items-center gap-1.5 text-emerald-500 text-xs font-bold">
+                                <CheckCircle2 size={14} />
                                 Active
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
+                          <td className="px-6 py-4 text-sm text-slate-500">
                             {new Date(u.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="flex items-center justify-end gap-1">
                               <button
                                 onClick={() => handleResetPassword(u.id)}
-                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
                                 title="Reset Password"
                               >
                                 <Lock size={16} />
@@ -880,28 +825,28 @@ export default function App() {
                                 <>
                                   <button
                                     onClick={() => handleClearSocials(u.id)}
-                                    className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                                    className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all"
                                     title="Remove Social Links"
                                   >
                                     <Link2Off size={16} />
                                   </button>
                                   <button
                                     onClick={() => handleClearProfile(u.id)}
-                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                    title="Clear Profile (Spam/Abuse)"
+                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                    title="Clear Profile"
                                   >
                                     <Eraser size={16} />
                                   </button>
                                   <button
                                     onClick={() => handleSuspendUser(u.id, u.is_suspended)}
-                                    className={`p-2 rounded-lg transition-all ${u.is_suspended ? 'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50' : 'text-orange-400 hover:text-orange-600 hover:bg-orange-50'}`}
-                                    title={u.is_suspended ? "Unsuspend User" : "Suspend User"}
+                                    className={`p-2 rounded-xl transition-all ${u.is_suspended ? 'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50' : 'text-orange-400 hover:text-orange-600 hover:bg-orange-50'}`}
+                                    title={u.is_suspended ? "Unsuspend" : "Suspend"}
                                   >
                                     <Ban size={16} />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteUser(u.id)}
-                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                                     title="Delete User"
                                   >
                                     <Trash2 size={16} />
@@ -917,34 +862,30 @@ export default function App() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
+              <div className="glass-panel rounded-3xl overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-gray-50 border-b border-black/5">
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Job Title</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Company</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Posted By</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Job Title</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Company</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Posted By</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-black/5">
+                    <tbody className="divide-y divide-slate-100">
                       {jobs.map((job) => (
-                        <tr key={job.id} className="hover:bg-gray-50/50 transition-colors">
+                        <tr key={job.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="px-6 py-4">
-                            <div className="font-bold text-gray-900">{job.title}</div>
-                            <div className="text-xs text-gray-500">{job.category}</div>
+                            <div className="font-bold text-slate-900">{job.title}</div>
+                            <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">{job.category}</div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{job.company}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{job.posted_by}</td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {new Date(job.created_at).toLocaleDateString()}
-                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{job.company}</td>
+                          <td className="px-6 py-4 text-sm text-slate-600">{job.posted_by}</td>
                           <td className="px-6 py-4 text-right">
                             <button
                               onClick={() => handleRemoveJob(job.id)}
-                              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                               title="Remove Job"
                             >
                               <Trash2 size={16} />
@@ -960,178 +901,221 @@ export default function App() {
           </div>
         ) : activeTab === "jobs" ? (
           <>
-            {/* Filters and Sort */}
-            <div className="flex flex-col gap-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2 text-gray-500 mr-2">
-                <Filter size={18} />
-                <span className="text-sm font-medium">Category:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                      selectedCategory === cat
-                        ? "bg-indigo-600 text-white shadow-md"
-                        : "bg-white text-gray-600 border border-black/5 hover:bg-gray-50"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 text-gray-500 mr-2">
-                <ArrowUpDown size={18} />
-                <span className="text-sm font-medium">Sort by:</span>
-              </div>
-              <button
-                onClick={() => setSortOrder(sortOrder === "newest" ? "oldest" : "newest")}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white border border-black/5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
+            <section className="mb-16 text-center max-w-3xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6"
               >
-                {sortOrder === "newest" ? (
-                  <>
-                    Newest First
-                    <ArrowDown size={14} className="text-indigo-600" />
-                  </>
-                ) : (
-                  <>
-                    Oldest First
-                    <ArrowUp size={14} className="text-indigo-600" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+                <span className="inline-block px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-widest mb-4">
+                  Discover Your Future
+                </span>
+                <h2 className="text-5xl font-display font-bold tracking-tight text-slate-900 mb-6 leading-tight">
+                  Find your dream job <br />
+                  <span className="text-indigo-600">without the hassle.</span>
+                </h2>
+                <p className="text-lg text-slate-500 leading-relaxed">
+                  Connect with top companies and explore thousands of job opportunities tailored to your skills and experience.
+                </p>
+              </motion.div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 text-gray-500 mr-2">
-              <Award size={18} />
-              <span className="text-sm font-medium">Experience:</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {EXPERIENCE_LEVELS.map((exp) => (
-                <button
-                  key={exp}
-                  onClick={() => setSelectedExperience(exp)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    selectedExperience === exp
-                      ? "bg-indigo-600 text-white shadow-md"
-                      : "bg-white text-gray-600 border border-black/5 hover:bg-gray-50"
-                  }`}
-                >
-                  {exp}
+              <div className="flex flex-col sm:flex-row items-center gap-3 glass-panel p-3 rounded-[2.5rem]">
+                <div className="relative flex-1 w-full">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Job title, company, or keywords..."
+                    className="w-full pl-12 pr-4 py-4 rounded-3xl bg-slate-50/50 border-none focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-900"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="relative flex-1 w-full">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="City, state, or remote..."
+                    className="w-full pl-12 pr-4 py-4 rounded-3xl bg-slate-50/50 border-none focus:ring-2 focus:ring-indigo-500/20 transition-all text-slate-900"
+                    value={locationQuery}
+                    onChange={(e) => setLocationQuery(e.target.value)}
+                  />
+                </div>
+                <button className="btn-primary w-full sm:w-auto h-full py-4 px-8 rounded-3xl">
+                  Search Jobs
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
+              </div>
+            </section>
 
-        {/* Job Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-black/5 animate-pulse h-48" />
-            ))}
-          </div>
-        ) : filteredJobs.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <AnimatePresence mode="popLayout">
-                {paginatedJobs.map((job) => (
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    key={job.id}
-                    className="bg-white rounded-2xl p-6 border border-black/5 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group flex flex-col justify-between"
+            {/* Filters and Sort */}
+            <div className="flex flex-col gap-10 mb-12">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 text-slate-400 mr-2">
+                    <Filter size={18} />
+                    <span className="text-sm font-bold uppercase tracking-wider">Category</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-5 py-2 rounded-2xl text-sm font-semibold transition-all ${
+                          selectedCategory === cat
+                            ? "nav-item-active"
+                            : "bg-white text-slate-500 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-slate-400 mr-2">
+                    <ArrowUpDown size={18} />
+                    <span className="text-sm font-bold uppercase tracking-wider">Sort</span>
+                  </div>
+                  <button
+                    onClick={() => setSortOrder(sortOrder === "newest" ? "oldest" : "newest")}
+                    className="flex items-center gap-3 px-5 py-2 rounded-2xl bg-white border border-slate-200 text-sm font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-all"
                   >
-                    <div>
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-2">
-                          <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                            {job.category}
-                          </span>
-                          <span className="flex items-center gap-1 bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full border border-black/5">
-                            {getLinkIcon(job.link_type)}
-                            {job.link_type}
-                          </span>
-                        </div>
-                        <span className="text-gray-400 text-xs flex items-center gap-1">
-                          <Calendar size={12} />
-                          {new Date(job.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <h3 className="text-lg font-bold mb-1 group-hover:text-indigo-600 transition-colors">
-                        {job.title}
-                      </h3>
-                      <div className="flex items-center gap-1.5 text-gray-600 text-sm mb-2">
-                        <Building2 size={14} />
-                        {job.company}
-                      </div>
-                      <div className="flex flex-wrap gap-3 text-gray-500 text-xs mb-4">
-                        {job.location && (
-                          <div className="flex items-center gap-1">
-                            <MapPin size={12} />
-                            {job.location}
-                          </div>
-                        )}
-                        {job.experience && (
-                          <div className="flex items-center gap-1">
-                            <Award size={12} />
-                            {job.experience}
-                          </div>
-                        )}
-                        {job.salary && (
-                          <div className="flex items-center gap-1">
-                            <DollarSign size={12} />
-                            {job.salary}
-                          </div>
-                        )}
-                      </div>
-                      {job.requirements && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-4 italic">
-                          "{job.requirements}"
-                        </p>
-                      )}
-                    </div>
+                    {sortOrder === "newest" ? "Newest First" : "Oldest First"}
+                    {sortOrder === "newest" ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
+                  </button>
+                  <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="btn-primary flex items-center gap-2"
+                  >
+                    <Plus size={18} />
+                    Post Job
+                  </button>
+                </div>
+              </div>
 
-                    <div className="pt-4 border-t border-black/5 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-gray-500 text-xs">
-                        <User size={14} />
-                        Posted by: <span className="font-medium text-gray-700">{job.posted_by}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {user?.role === 'admin' && (
-                          <button
-                            onClick={() => handleRemoveJob(job.id)}
-                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            title="Remove Posting"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                        <a
-                          href={job.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 text-sm font-semibold"
-                        >
-                          Apply
-                          <ExternalLink size={14} />
-                        </a>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 text-slate-400 mr-2">
+                  <Award size={18} />
+                  <span className="text-sm font-bold uppercase tracking-wider">Experience</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {EXPERIENCE_LEVELS.map((exp) => (
+                    <button
+                      key={exp}
+                      onClick={() => setSelectedExperience(exp)}
+                      className={`px-5 py-2 rounded-2xl text-sm font-semibold transition-all ${
+                        selectedExperience === exp
+                          ? "nav-item-active"
+                          : "bg-white text-slate-500 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                      }`}
+                    >
+                      {exp}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* Job Grid */}
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-white rounded-3xl p-8 border border-slate-100 animate-pulse h-64" />
+                ))}
+              </div>
+            ) : filteredJobs.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <AnimatePresence mode="popLayout">
+                    {paginatedJobs.map((job) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        key={job.id}
+                        className="glass-panel p-8 rounded-4xl job-card-hover group flex flex-col justify-between"
+                      >
+                        <div>
+                          <div className="flex justify-between items-start mb-6">
+                            <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-xl">
+                              {job.category}
+                            </span>
+                            <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                              <Calendar size={12} />
+                              {new Date(job.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          
+                          <h3 className="text-xl font-display font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                            {job.title}
+                          </h3>
+                          
+                          <div className="flex items-center gap-2 text-slate-500 font-medium mb-6">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                              <Building2 size={16} />
+                            </div>
+                            {job.company}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 mb-6">
+                            {job.location && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border border-slate-100">
+                                <MapPin size={12} />
+                                {job.location}
+                              </div>
+                            )}
+                            {job.experience && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border border-slate-100">
+                                <Award size={12} />
+                                {job.experience}
+                              </div>
+                            )}
+                            {job.salary && (
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
+                                <DollarSign size={12} />
+                                {job.salary}
+                              </div>
+                            )}
+                          </div>
+
+                          {job.requirements && (
+                            <p className="text-sm text-slate-500 line-clamp-2 mb-8 italic leading-relaxed">
+                              "{job.requirements}"
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                              <User size={12} />
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{job.posted_by}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {user?.role === 'admin' && (
+                              <button
+                                onClick={() => handleRemoveJob(job.id)}
+                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                            <a
+                              href={job.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn-primary !px-5 !py-2 !text-xs !rounded-xl"
+                            >
+                              Apply Now
+                            </a>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
@@ -1197,79 +1181,87 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-lg p-8 relative shadow-2xl overflow-hidden"
+              className="bg-white rounded-[2.5rem] w-full max-w-xl p-10 relative shadow-2xl overflow-hidden border border-slate-100"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">Post a Job Opening</h2>
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h2 className="text-3xl font-display font-bold tracking-tight text-slate-900">Post a Job</h2>
+                  <p className="text-slate-500 text-sm">Fill in the details to find your next great hire.</p>
+                </div>
                 <button
                   onClick={() => {
                     setIsModalOpen(false);
                     setMagicLink("");
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-400"
                 >
                   <X size={24} />
                 </button>
               </div>
 
               {/* Magic Paste Section */}
-              <div className="mb-8 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="text-indigo-600 w-4 h-4" />
-                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Magic Auto-Fill</span>
+              <div className="mb-8 p-6 bg-indigo-50/50 rounded-3xl border border-indigo-100/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="bg-indigo-600 p-1.5 rounded-lg">
+                    <Sparkles className="text-white w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Magic Auto-Fill</span>
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="Paste LinkedIn/Naukri link here..."
-                    className="flex-1 px-4 py-2 rounded-xl border border-indigo-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                    value={magicLink}
-                    onChange={(e) => {
-                      setMagicLink(e.target.value);
-                      setNewJob(prev => ({ ...prev, link: e.target.value, link_type: detectLinkType(e.target.value) }));
-                    }}
-                  />
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <Link className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300 w-4 h-4" />
+                    <input
+                      type="url"
+                      placeholder="Paste LinkedIn or Naukri link..."
+                      className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-indigo-200 bg-white text-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                      value={magicLink}
+                      onChange={(e) => {
+                        setMagicLink(e.target.value);
+                        setNewJob(prev => ({ ...prev, link: e.target.value, link_type: detectLinkType(e.target.value) }));
+                      }}
+                    />
+                  </div>
                   <button
                     type="button"
                     disabled={isExtracting || !magicLink}
                     onClick={handleMagicExtract}
-                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2"
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white px-6 py-3.5 rounded-2xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
                   >
                     {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Extract"}
                   </button>
                 </div>
-                <p className="text-[10px] text-indigo-400 mt-2">Paste a link and we'll try to fill the form for you!</p>
+                <p className="text-[10px] text-indigo-400 mt-3 font-medium">We'll use AI to automatically fill the form fields for you!</p>
               </div>
 
-              <form onSubmit={handlePostJob} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Title</label>
+              <form onSubmit={handlePostJob} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Job Title</label>
                   <input
                     required
                     type="text"
-                    placeholder="e.g. Senior Frontend Developer"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    placeholder="e.g. Senior Product Designer"
+                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                     value={newJob.title}
                     onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Company</label>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Company</label>
                     <input
                       required
                       type="text"
-                      placeholder="e.g. Google"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      placeholder="e.g. Acme Inc."
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                       value={newJob.company}
                       onChange={(e) => setNewJob({ ...newJob, company: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category</label>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Category</label>
                     <select
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900 appearance-none cursor-pointer"
                       value={newJob.category}
                       onChange={(e) => setNewJob({ ...newJob, category: e.target.value })}
                     >
@@ -1282,21 +1274,21 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Location</label>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
                     <input
                       type="text"
-                      placeholder="e.g. Remote / New York"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      placeholder="e.g. Remote / Bangalore"
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                       value={newJob.location}
                       onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Experience</label>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Experience</label>
                     <select
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900 appearance-none cursor-pointer"
                       value={newJob.experience}
                       onChange={(e) => setNewJob({ ...newJob, experience: e.target.value })}
                     >
@@ -1309,79 +1301,46 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Salary Range</label>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Salary Range</label>
                     <input
                       type="text"
-                      placeholder="e.g. $100k - $150k"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      placeholder="e.g. ₹15L - ₹25L"
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                       value={newJob.salary}
                       onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Link Type</label>
-                    <select
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
-                      value={newJob.link_type}
-                      onChange={(e) => setNewJob({ ...newJob, link_type: e.target.value })}
-                    >
-                      {["LinkedIn", "Twitter", "Instagram", "GitHub", "Other"].map((type) => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Link</label>
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                      {getLinkIcon(newJob.link_type)}
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Application Link</label>
                     <input
                       required
                       type="url"
                       placeholder="https://..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                       value={newJob.link}
-                      onChange={(e) => {
-                        const url = e.target.value;
-                        setNewJob({ ...newJob, link: url, link_type: detectLinkType(url) });
-                      }}
+                      onChange={(e) => setNewJob({ ...newJob, link: e.target.value, link_type: detectLinkType(e.target.value) })}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Requirements / Description</label>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Requirements (Optional)</label>
                   <textarea
-                    rows={3}
-                    placeholder="Key skills, responsibilities..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                    placeholder="Briefly list key requirements or skills..."
+                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900 resize-none h-24"
                     value={newJob.requirements}
                     onChange={(e) => setNewJob({ ...newJob, requirements: e.target.value })}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Your Name</label>
-                  <input
-                    required
-                    type="text"
-                    placeholder="John Doe"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                    value={newJob.posted_by}
-                    onChange={(e) => setNewJob({ ...newJob, posted_by: e.target.value })}
-                  />
-                </div>
-
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] mt-4"
+                  disabled={isLoading}
+                  className="w-full btn-primary py-5 rounded-2xl text-lg font-bold shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3"
                 >
-                  Post Job
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Plus size={22} /> Post Job Opening</>}
                 </button>
               </form>
             </motion.div>
@@ -1404,95 +1363,97 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-lg p-8 relative shadow-2xl overflow-hidden"
+              className="bg-white rounded-[2.5rem] w-full max-w-2xl p-10 relative shadow-2xl overflow-y-auto max-h-[90vh] border border-slate-100"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">Candidate Profile</h2>
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h2 className="text-3xl font-display font-bold tracking-tight text-slate-900">Your Profile</h2>
+                  <p className="text-slate-500 text-sm">Keep your professional information up to date.</p>
+                </div>
                 <button
                   onClick={() => setIsProfileModalOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-400"
                 >
                   <X size={24} />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveProfile} className="space-y-6">
+              <form onSubmit={handleSaveProfile} className="space-y-8">
                 {/* Basic Details Section */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Basic Details</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
+                <div className="space-y-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Basic Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           required
                           type="text"
                           placeholder="John Doe"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={profile.name}
                           onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Photo</label>
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Photo</label>
+                      <div className="flex items-center gap-4 mt-2">
+                        <div className="relative w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 shadow-inner">
                           {profile.photo_url ? (
                             <img src={profile.photo_url} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <Camera size={20} />
+                            <div className="w-full h-full flex items-center justify-center text-slate-300">
+                              <Camera size={24} />
                             </div>
                           )}
                         </div>
                         <div className="flex-1">
                           <div className="flex gap-2">
-                            <label className="cursor-pointer px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition-all flex items-center gap-2">
+                            <label className="cursor-pointer px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all flex items-center gap-2">
                               <Upload size={14} />
-                              {profile.photo_url ? "Change Photo" : "Upload Photo"}
+                              {profile.photo_url ? "Change" : "Upload"}
                               <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
                             </label>
                             {profile.photo_url && (
                               <button
                                 type="button"
                                 onClick={() => setProfile({ ...profile, photo_url: "" })}
-                                className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-semibold hover:bg-red-100 transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-bold hover:bg-red-100 transition-all flex items-center gap-2"
                               >
                                 <Trash2 size={14} />
                                 Remove
                               </button>
                             )}
                           </div>
-                          <p className="text-[10px] text-gray-400 mt-1.5 uppercase tracking-wider font-bold">Optional: Square images work best</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Contact Details</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Contact Details</label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="text"
                           placeholder="Phone or secondary email"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={profile.contact_details}
                           onChange={(e) => setProfile({ ...profile, contact_details: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Location</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Location</label>
                       <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="text"
                           placeholder="City, Country"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={profile.location}
                           onChange={(e) => setProfile({ ...profile, location: e.target.value })}
                         />
@@ -1502,63 +1463,63 @@ export default function App() {
                 </div>
 
                 {/* Professional Details Section */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Professional Details</h3>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Skills (comma separated)</label>
+                <div className="space-y-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Professional Details</h3>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Skills (comma separated)</label>
                     <div className="relative">
-                      <Award className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                      <Award className="absolute left-4 top-4 text-slate-400 w-4 h-4" />
                       <textarea
                         rows={2}
                         placeholder="React, TypeScript, Node.js, UI Design..."
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                        className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900 resize-none"
                         value={profile.skills}
                         onChange={(e) => setProfile({ ...profile, skills: e.target.value })}
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Education</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Education</label>
                       <div className="relative">
-                        <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="text"
                           placeholder="Degree, University"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={profile.education}
                           onChange={(e) => setProfile({ ...profile, education: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Resume (PDF/DOC)</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Resume (PDF/DOC)</label>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
-                          <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                           <input
                             type="url"
                             placeholder="https://..."
-                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                             value={profile.resume_url}
                             onChange={(e) => setProfile({ ...profile, resume_url: e.target.value })}
                           />
                         </div>
-                        <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 p-3 rounded-xl transition-colors flex items-center justify-center min-w-[48px]">
-                          {isUploading ? <Loader2 className="animate-spin text-indigo-600" size={20} /> : <Upload className="text-gray-600" size={20} />}
+                        <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 p-4 rounded-2xl transition-colors flex items-center justify-center min-w-[56px] text-slate-600">
+                          {isUploading ? <Loader2 className="animate-spin text-indigo-600" size={20} /> : <Upload size={20} />}
                           <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={handleResumeUpload} disabled={isUploading} />
                         </label>
                       </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Experience Summary (optional)</label>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Experience Summary</label>
                     <textarea
                       rows={3}
                       placeholder="Briefly describe your work history..."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900 resize-none"
                       value={profile.experience}
                       onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
                     />
@@ -1566,43 +1527,43 @@ export default function App() {
                 </div>
 
                 {/* Social & Links Section */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Social & Links</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Portfolio</label>
+                <div className="space-y-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Social & Links</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Portfolio</label>
                       <div className="relative">
-                        <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="url"
                           placeholder="Website"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={profile.portfolio_url}
                           onChange={(e) => setProfile({ ...profile, portfolio_url: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">LinkedIn</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">LinkedIn</label>
                       <div className="relative">
-                        <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Linkedin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="url"
                           placeholder="Profile"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={profile.linkedin_url}
                           onChange={(e) => setProfile({ ...profile, linkedin_url: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">GitHub</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">GitHub</label>
                       <div className="relative">
-                        <Github className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Github className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="url"
                           placeholder="Profile"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={profile.github_url}
                           onChange={(e) => setProfile({ ...profile, github_url: e.target.value })}
                         />
@@ -1611,31 +1572,31 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-black/5">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${profile.is_public ? "bg-emerald-100 text-emerald-600" : "bg-gray-200 text-gray-500"}`}>
-                      {profile.is_public ? <Eye size={18} /> : <EyeOff size={18} />}
+                <div className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-200 shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-2xl shadow-sm ${profile.is_public ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-500"}`}>
+                      {profile.is_public ? <Eye size={20} /> : <EyeOff size={20} />}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-900">Profile Visibility</p>
-                      <p className="text-[10px] text-gray-500">{profile.is_public ? "Your profile is visible to recruiters" : "Your profile is hidden from recruiters"}</p>
+                      <p className="text-sm font-bold text-slate-900">Profile Visibility</p>
+                      <p className="text-xs text-slate-500">{profile.is_public ? "Your profile is visible to recruiters" : "Your profile is hidden from recruiters"}</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setProfile({ ...profile, is_public: !profile.is_public })}
-                    className={`w-12 h-6 rounded-full transition-all relative ${profile.is_public ? "bg-emerald-500" : "bg-gray-300"}`}
+                    className={`w-14 h-8 rounded-full transition-all relative ${profile.is_public ? "bg-emerald-500 shadow-lg shadow-emerald-500/20" : "bg-slate-300"}`}
                   >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${profile.is_public ? "left-7" : "left-1"}`} />
+                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm ${profile.is_public ? "left-7" : "left-1"}`} />
                   </button>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  disabled={isLoading}
+                  className="w-full btn-primary py-5 rounded-2xl text-lg font-bold shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3"
                 >
-                  <Save size={20} />
-                  Save Profile
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Save size={22} /> Update Profile Settings</>}
                 </button>
               </form>
             </motion.div>
@@ -1657,50 +1618,50 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-md p-8 relative shadow-2xl overflow-hidden"
+              className="bg-white rounded-[2.5rem] w-full max-w-md p-10 relative shadow-2xl overflow-hidden border border-slate-100"
             >
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight">
+                  <h2 className="text-3xl font-display font-bold tracking-tight text-slate-900">
                     {authMode === "login" ? "Welcome Back" : authMode === "register" ? "Create Account" : "Reset Password"}
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-slate-500 text-sm mt-1">
                     {authMode === "login" ? "Login to manage your profile and jobs" : authMode === "register" ? "Join our community of professionals" : "Enter your email to reset password"}
                   </p>
                 </div>
                 <button
                   onClick={() => setIsAuthModalOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-400"
                 >
                   <X size={24} />
                 </button>
               </div>
 
-              <form onSubmit={handleAuth} className="space-y-4">
+              <form onSubmit={handleAuth} className="space-y-5">
                 {authMode === "register" && (
                   <>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Username</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           required
                           type="text"
                           placeholder="johndoe"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={authForm.username}
                           onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="tel"
-                          placeholder="+1234567890"
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          placeholder="+91 98765 43210"
+                          className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                           value={authForm.phone}
                           onChange={(e) => setAuthForm({ ...authForm, phone: e.target.value })}
                         />
@@ -1708,43 +1669,43 @@ export default function App() {
                     </div>
                   </>
                 )}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
                     {authMode === "login" ? "Username or Email" : "Email Address"}
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <input
                       required
                       type={authMode === "login" ? "text" : "email"}
                       placeholder={authMode === "login" ? "Admin or john@example.com" : "john@example.com"}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                       value={authForm.email}
                       onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
                     />
                   </div>
                 </div>
                 {authMode !== "forgot" && (
-                  <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                      <label className="block text-sm font-semibold text-gray-700">Password</label>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center ml-1">
+                      <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Password</label>
                       {authMode === "login" && (
                         <button
                           type="button"
                           onClick={() => setAuthMode("forgot")}
-                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider"
                         >
                           Forgot?
                         </button>
                       )}
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                       <input
                         required
                         type="password"
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                         value={authForm.password}
                         onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
                       />
@@ -1754,18 +1715,19 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] mt-2"
+                  disabled={isLoading}
+                  className="w-full btn-primary py-5 rounded-2xl text-lg font-bold shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3 mt-4"
                 >
-                  {authMode === "login" ? "Sign In" : authMode === "register" ? "Create Account" : "Send Reset Link"}
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : (authMode === "login" ? "Sign In" : authMode === "register" ? "Create Account" : "Send Reset Link")}
                 </button>
               </form>
 
-              <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-                <p className="text-sm text-gray-500">
+              <div className="mt-8 pt-8 border-t border-slate-100 text-center">
+                <p className="text-sm text-slate-500">
                   {authMode === "login" ? "Don't have an account?" : "Already have an account?"}
                   <button
                     onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
-                    className="ml-1 font-bold text-indigo-600 hover:text-indigo-700"
+                    className="ml-2 font-bold text-indigo-600 hover:text-indigo-700"
                   >
                     {authMode === "login" ? "Sign Up" : "Sign In"}
                   </button>
@@ -1791,28 +1753,31 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-sm p-8 relative shadow-2xl overflow-hidden"
+              className="bg-white rounded-[2.5rem] w-full max-w-sm p-10 relative shadow-2xl overflow-hidden border border-slate-100"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold tracking-tight">Change Password</h2>
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h2 className="text-2xl font-display font-bold tracking-tight text-slate-900">Change Password</h2>
+                  <p className="text-slate-500 text-xs mt-1">Secure your account with a new password.</p>
+                </div>
                 <button
                   onClick={() => setIsSelfResetModalOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-400"
                 >
                   <X size={24} />
                 </button>
               </div>
 
-              <form onSubmit={handleSelfResetPassword} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">New Password</label>
+              <form onSubmit={handleSelfResetPassword} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">New Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                     <input
                       required
                       type="password"
                       placeholder="••••••••"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="w-full pl-11 pr-4 py-4 rounded-2xl border border-slate-200 bg-slate-50/50 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900"
                       value={selfResetPassword}
                       onChange={(e) => setSelfResetPassword(e.target.value)}
                     />
@@ -1821,9 +1786,10 @@ export default function App() {
 
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] mt-2"
+                  disabled={isLoading}
+                  className="w-full btn-primary py-5 rounded-2xl text-lg font-bold shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3 mt-4"
                 >
-                  Update Password
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Save size={20} /> Update Password</>}
                 </button>
               </form>
             </motion.div>
