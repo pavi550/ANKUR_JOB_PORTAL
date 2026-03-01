@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff, Globe, Linkedin, Github, GraduationCap, Phone, Camera, Upload } from "lucide-react";
+import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff, Globe, Linkedin, Github, GraduationCap, Phone, Camera, Upload, Twitter, Instagram, Shield, Trash2, Ban, RefreshCw, CheckCircle2, Users, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI } from "@google/genai";
 
@@ -15,6 +15,7 @@ interface Job {
   salary: string;
   requirements: string;
   link: string;
+  link_type: string;
   posted_by: string;
   created_at: string;
 }
@@ -22,6 +23,7 @@ interface Job {
 interface Profile {
   name: string;
   email: string;
+  role: string;
   photo_url: string;
   contact_details: string;
   location: string;
@@ -39,6 +41,7 @@ interface AuthUser {
   id: number;
   username: string;
   email: string;
+  role: string;
   is_public?: number;
 }
 
@@ -61,7 +64,13 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [magicLink, setMagicLink] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"jobs" | "profile">("jobs");
+  const [activeTab, setActiveTab] = useState<"jobs" | "profile" | "admin">("jobs");
+  const [adminUsers, setAdminUsers] = useState<any[]>([]);
+  const [adminStats, setAdminStats] = useState<any>(null);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"user" | "admin">("user");
+  const [isSelfResetModalOpen, setIsSelfResetModalOpen] = useState(false);
+  const [selfResetPassword, setSelfResetPassword] = useState("");
 
   // Auth State
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
@@ -73,6 +82,7 @@ export default function App() {
   const [profile, setProfile] = useState<Profile>({
     name: "",
     email: "",
+    role: "user",
     photo_url: "",
     contact_details: "",
     location: "",
@@ -95,6 +105,7 @@ export default function App() {
     salary: "",
     requirements: "",
     link: "",
+    link_type: "Other",
     posted_by: "",
   });
 
@@ -105,14 +116,28 @@ export default function App() {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      setViewMode("admin");
+      fetchAdminStats();
+      fetchAdminUsers();
+    } else {
+      setViewMode("user");
+    }
+  }, [user]);
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/register";
+    const payload = authMode === "login" 
+      ? { identifier: authForm.email, password: authForm.password }
+      : authForm;
+      
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authForm),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (response.ok) {
@@ -134,7 +159,7 @@ export default function App() {
     setUser(null);
     localStorage.removeItem("token");
     setProfile({ 
-      name: "", email: "", photo_url: "", contact_details: "", location: "",
+      name: "", email: "", role: "user", photo_url: "", contact_details: "", location: "",
       skills: "", experience: "", education: "", resume_url: "",
       portfolio_url: "", linkedin_url: "", github_url: "", is_public: true 
     });
@@ -151,6 +176,7 @@ export default function App() {
         setProfile({
           name: data.name || "",
           email: data.email || "",
+          role: data.role || "user",
           photo_url: data.photo_url || "",
           contact_details: data.contact_details || "",
           location: data.location || "",
@@ -163,7 +189,13 @@ export default function App() {
           github_url: data.github_url || "",
           is_public: data.is_public === 1,
         });
-        setUser({ id: data.user_id, username: data.username, email: data.email, is_public: data.is_public });
+        setUser({
+          id: data.user_id,
+          username: data.username,
+          email: data.email,
+          role: data.role,
+          is_public: data.is_public
+        });
       } else if (response.status === 401) {
         handleLogout();
       }
@@ -204,6 +236,152 @@ export default function App() {
     }
   };
 
+  const detectLinkType = (url: string) => {
+    if (url.includes("linkedin.com")) return "LinkedIn";
+    if (url.includes("twitter.com") || url.includes("x.com")) return "Twitter";
+    if (url.includes("instagram.com")) return "Instagram";
+    if (url.includes("github.com")) return "GitHub";
+    return "Other";
+  };
+
+  const getLinkIcon = (type: string) => {
+    switch (type) {
+      case "LinkedIn": return <Linkedin size={14} className="text-[#0A66C2]" />;
+      case "Twitter": return <Twitter size={14} className="text-[#1DA1F2]" />;
+      case "Instagram": return <Instagram size={14} className="text-[#E4405F]" />;
+      case "GitHub": return <Github size={14} className="text-[#181717]" />;
+      default: return <Globe size={14} className="text-gray-400" />;
+    }
+  };
+
+  const fetchAdminStats = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch("/api/admin/stats", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminStats(data);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
+  const fetchAdminUsers = async () => {
+    if (!token || user?.role !== 'admin') return;
+    setIsAdminLoading(true);
+    try {
+      const response = await fetch("/api/admin/users", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminUsers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+    } finally {
+      setIsAdminLoading(false);
+    }
+  };
+
+  const handleSuspendUser = async (userId: number, isSuspended: boolean) => {
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/suspend`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_suspended: !isSuspended })
+      });
+      if (response.ok) {
+        fetchAdminUsers();
+      }
+    } catch (error) {
+      console.error("Error suspending user:", error);
+    }
+  };
+
+  const handleDeleteUser = async (userId: number) => {
+    if (!token || !confirm("Are you sure you want to delete this user and all their data?")) return;
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (response.ok) {
+        fetchAdminUsers();
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
+  const handleSelfResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selfResetPassword || !token) return;
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ newPassword: selfResetPassword })
+      });
+      if (response.ok) {
+        alert("Password updated successfully");
+        setIsSelfResetModalOpen(false);
+        setSelfResetPassword("");
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to update password");
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      alert("An error occurred");
+    }
+  };
+
+  const handleResetPassword = async (userId: number) => {
+    const newPassword = prompt("Enter new password:");
+    if (!newPassword || !token) return;
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ newPassword })
+      });
+      if (response.ok) {
+        alert("Password reset successful");
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+    }
+  };
+
+  const handleRemoveJob = async (jobId: number) => {
+    if (!token || !confirm("Are you sure you want to remove this job posting?")) return;
+    try {
+      const response = await fetch(`/api/admin/jobs/${jobId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (response.ok) {
+        fetchJobs();
+      }
+    } catch (error) {
+      console.error("Error removing job:", error);
+    }
+  };
+
   const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
@@ -231,6 +409,7 @@ export default function App() {
           salary: "",
           requirements: "",
           link: "",
+          link_type: "Other",
           posted_by: user?.username || "",
         });
         setMagicLink("");
@@ -316,6 +495,12 @@ export default function App() {
     setCurrentPage(1); // Reset to first page on filter/search change
   }, [selectedCategory, selectedExperience, searchQuery, locationQuery, sortOrder, jobs]);
 
+  useEffect(() => {
+    if (activeTab === 'admin') {
+      fetchAdminUsers();
+    }
+  }, [activeTab]);
+
   const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
   const paginatedJobs = filteredJobs.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -351,7 +536,8 @@ export default function App() {
           experience: result.experience || prev.experience,
           salary: result.salary || prev.salary,
           requirements: result.requirements || prev.requirements,
-          link: magicLink
+          link: magicLink,
+          link_type: detectLinkType(magicLink)
         }));
       }
     } catch (error) {
@@ -387,6 +573,33 @@ export default function App() {
               >
                 My Profile
               </button>
+              {user?.role === 'admin' && (
+                <button 
+                  onClick={() => setActiveTab("admin")}
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${activeTab === "admin" ? "bg-red-50 text-red-600" : "text-gray-500 hover:bg-gray-50"}`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Shield size={14} />
+                    Admin
+                  </div>
+                </button>
+              )}
+              {user?.role === 'admin' && (
+                <div className="flex items-center bg-gray-100 p-1 rounded-xl ml-4">
+                  <button 
+                    onClick={() => { setViewMode("user"); setActiveTab("jobs"); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "user" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    User View
+                  </button>
+                  <button 
+                    onClick={() => { setViewMode("admin"); setActiveTab("admin"); }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${viewMode === "admin" ? "bg-white text-red-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    Admin View
+                  </button>
+                </div>
+              )}
             </nav>
           </div>
 
@@ -452,8 +665,165 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters and Sort */}
-        <div className="flex flex-col gap-6 mb-8">
+        {activeTab === "admin" && user?.role === 'admin' ? (
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
+                <p className="text-gray-500 mt-1">Platform overview and moderation</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setIsSelfResetModalOpen(true)}
+                  className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-all flex items-center gap-2"
+                >
+                  <Lock size={14} />
+                  Change My Password
+                </button>
+                <button 
+                  onClick={() => { fetchAdminStats(); fetchAdminUsers(); }}
+                  className="p-2 hover:bg-gray-100 rounded-xl transition-all"
+                >
+                  <RefreshCw className={`w-5 h-5 text-gray-400 ${isAdminLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+                    <Users size={24} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{adminStats?.totalUsers || 0}</div>
+                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Users</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                    <Briefcase size={24} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{adminStats?.totalJobs || 0}</div>
+                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Jobs</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-red-50 text-red-600 rounded-2xl">
+                    <Ban size={24} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{adminStats?.suspendedUsers || 0}</div>
+                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Suspended</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-black/5 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
+                    <TrendingUp size={24} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{adminStats?.recentJobs || 0}</div>
+                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">New (7d)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-black/5">
+                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Joined</th>
+                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {adminUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                              {u.username[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-bold text-gray-900">{u.username}</div>
+                              <div className="text-xs text-gray-500">{u.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {u.is_suspended ? (
+                            <span className="flex items-center gap-1 text-red-500 text-xs font-bold">
+                              <Ban size={12} />
+                              Suspended
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-emerald-500 text-xs font-bold">
+                              <CheckCircle2 size={12} />
+                              Active
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleResetPassword(u.id)}
+                              className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                              title="Reset Password"
+                            >
+                              <RefreshCw size={16} />
+                            </button>
+                            {u.role !== 'admin' && (
+                              <>
+                                <button
+                                  onClick={() => handleSuspendUser(u.id, u.is_suspended)}
+                                  className={`p-2 rounded-lg transition-all ${u.is_suspended ? 'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50' : 'text-orange-400 hover:text-orange-600 hover:bg-orange-50'}`}
+                                  title={u.is_suspended ? "Unsuspend User" : "Suspend User"}
+                                >
+                                  <Ban size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(u.id)}
+                                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                  title="Delete User"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === "jobs" ? (
+          <>
+            {/* Filters and Sort */}
+            <div className="flex flex-col gap-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2 text-gray-500 mr-2">
@@ -546,9 +916,15 @@ export default function App() {
                   >
                     <div>
                       <div className="flex justify-between items-start mb-4">
-                        <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                          {job.category}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                            {job.category}
+                          </span>
+                          <span className="flex items-center gap-1 bg-gray-50 text-gray-500 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full border border-black/5">
+                            {getLinkIcon(job.link_type)}
+                            {job.link_type}
+                          </span>
+                        </div>
                         <span className="text-gray-400 text-xs flex items-center gap-1">
                           <Calendar size={12} />
                           {new Date(job.created_at).toLocaleDateString()}
@@ -593,15 +969,26 @@ export default function App() {
                         <User size={14} />
                         Posted by: <span className="font-medium text-gray-700">{job.posted_by}</span>
                       </div>
-                      <a
-                        href={job.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 text-sm font-semibold"
-                      >
-                        Apply
-                        <ExternalLink size={14} />
-                      </a>
+                      <div className="flex items-center gap-2">
+                        {user?.role === 'admin' && (
+                          <button
+                            onClick={() => handleRemoveJob(job.id)}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Remove Posting"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                        <a
+                          href={job.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:text-indigo-700 flex items-center gap-1 text-sm font-semibold"
+                        >
+                          Apply
+                          <ExternalLink size={14} />
+                        </a>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -652,6 +1039,9 @@ export default function App() {
             <p className="text-gray-500">Be the first to post a job opening!</p>
           </div>
         )}
+          </>
+        ) : null}
+        {activeTab === "profile" && <div className="text-center py-20 text-gray-400">Profile content is managed via the profile modal.</div>}
       </main>
 
       {/* Post Job Modal */}
@@ -696,7 +1086,10 @@ export default function App() {
                     placeholder="Paste LinkedIn/Naukri link here..."
                     className="flex-1 px-4 py-2 rounded-xl border border-indigo-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     value={magicLink}
-                    onChange={(e) => setMagicLink(e.target.value)}
+                    onChange={(e) => {
+                      setMagicLink(e.target.value);
+                      setNewJob(prev => ({ ...prev, link: e.target.value, link_type: detectLinkType(e.target.value) }));
+                    }}
                   />
                   <button
                     type="button"
@@ -790,14 +1183,35 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Link</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Link Type</label>
+                    <select
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-white"
+                      value={newJob.link_type}
+                      onChange={(e) => setNewJob({ ...newJob, link_type: e.target.value })}
+                    >
+                      {["LinkedIn", "Twitter", "Instagram", "GitHub", "Other"].map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Job Link</label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                      {getLinkIcon(newJob.link_type)}
+                    </div>
                     <input
                       required
                       type="url"
                       placeholder="https://..."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                       value={newJob.link}
-                      onChange={(e) => setNewJob({ ...newJob, link: e.target.value })}
+                      onChange={(e) => {
+                        const url = e.target.value;
+                        setNewJob({ ...newJob, link: url, link_type: detectLinkType(url) });
+                      }}
                     />
                   </div>
                 </div>
@@ -1121,13 +1535,15 @@ export default function App() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    {authMode === "login" ? "Username or Email" : "Email Address"}
+                  </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       required
-                      type="email"
-                      placeholder="john@example.com"
+                      type={authMode === "login" ? "text" : "email"}
+                      placeholder={authMode === "login" ? "Admin or john@example.com" : "john@example.com"}
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                       value={authForm.email}
                       onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
@@ -1181,6 +1597,61 @@ export default function App() {
                   </button>
                 </p>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Self Password Reset Modal */}
+      <AnimatePresence>
+        {isSelfResetModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSelfResetModalOpen(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-sm p-8 relative shadow-2xl overflow-hidden"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold tracking-tight">Change Password</h2>
+                <button
+                  onClick={() => setIsSelfResetModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSelfResetPassword} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">New Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      required
+                      type="password"
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      value={selfResetPassword}
+                      onChange={(e) => setSelfResetPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] mt-2"
+                >
+                  Update Password
+                </button>
+              </form>
             </motion.div>
           </div>
         )}

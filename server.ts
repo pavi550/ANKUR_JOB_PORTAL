@@ -3,7 +3,7 @@ import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
 import fs from "fs";
@@ -51,6 +51,8 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    role TEXT DEFAULT 'user',
+    is_suspended INTEGER DEFAULT 0,
     is_public INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -65,6 +67,7 @@ db.exec(`
     salary TEXT,
     requirements TEXT,
     link TEXT NOT NULL,
+    link_type TEXT DEFAULT 'Other',
     posted_by TEXT NOT NULL,
     user_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -90,6 +93,30 @@ db.exec(`
   );
 `);
 
+// Migration: Add missing columns to users table if they don't exist
+const columns = db.prepare("PRAGMA table_info(users)").all() as any[];
+const columnNames = columns.map(c => c.name);
+
+if (!columnNames.includes("role")) {
+  db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
+}
+if (!columnNames.includes("is_suspended")) {
+  db.exec("ALTER TABLE users ADD COLUMN is_suspended INTEGER DEFAULT 0");
+}
+if (!columnNames.includes("is_public")) {
+  db.exec("ALTER TABLE users ADD COLUMN is_public INTEGER DEFAULT 1");
+}
+
+// Migration for jobs table
+const jobColumns = db.prepare("PRAGMA table_info(jobs)").all() as any[];
+const jobColumnNames = jobColumns.map(c => c.name);
+if (!jobColumnNames.includes("user_id")) {
+  db.exec("ALTER TABLE jobs ADD COLUMN user_id INTEGER");
+}
+if (!jobColumnNames.includes("link_type")) {
+  db.exec("ALTER TABLE jobs ADD COLUMN link_type TEXT DEFAULT 'Other'");
+}
+
 // Middleware to verify JWT
 const authenticateToken = (req: any, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
@@ -99,8 +126,26 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
   jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
     if (err) return res.status(403).json({ error: "Forbidden" });
+    
+    // Check if user is suspended
+    const dbUser: any = db.prepare("SELECT is_suspended FROM users WHERE id = ?").get(user.id);
+    if (dbUser && dbUser.is_suspended) {
+      return res.status(403).json({ error: "Account suspended. Please contact support." });
+    }
+
     req.user = user;
     next();
+  });
+};
+
+const authenticateAdmin = (req: any, res: any, next: any) => {
+  authenticateToken(req, res, () => {
+    const user: any = db.prepare("SELECT role FROM users WHERE id = ?").get(req.user.id);
+    if (user && user.role === 'admin') {
+      next();
+    } else {
+      res.status(403).json({ error: "Admin access required" });
+    }
   });
 };
 
@@ -110,6 +155,26 @@ async function startServer() {
 
   app.use(express.json());
   app.use("/uploads", express.static(uploadsDir));
+
+  // Seed default Admin user
+  const adminUser: any = db.prepare("SELECT * FROM users WHERE username = 'Admin'").get();
+  if (!adminUser) {
+    const hashedPassword = await bcrypt.hash("Admin", 10);
+    const info = db.prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)")
+      .run("Admin", "admin@ankur.com", hashedPassword, "admin");
+    db.prepare("INSERT INTO profiles (user_id, name) VALUES (?, ?)").run(info.lastInsertRowid, "Administrator");
+    console.log("Default Admin user created (Admin/Admin)");
+  }
+
+  // Promote first user to admin if no admin exists (fallback)
+  const adminCount: any = db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin'").get();
+  if (adminCount.count === 0) {
+    const firstUser: any = db.prepare("SELECT id FROM users ORDER BY id ASC LIMIT 1").get();
+    if (firstUser) {
+      db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(firstUser.id);
+      console.log(`User ${firstUser.id} promoted to admin`);
+    }
+  }
 
   // Upload Route
   app.post("/api/upload/resume", authenticateToken, upload.single("resume"), (req: any, res) => {
@@ -135,8 +200,8 @@ async function startServer() {
       // Create initial profile
       db.prepare("INSERT INTO profiles (user_id, name) VALUES (?, ?)").run(info.lastInsertRowid, username);
       
-      const token = jwt.sign({ id: info.lastInsertRowid, username, email }, JWT_SECRET);
-      res.status(201).json({ token, user: { id: info.lastInsertRowid, username, email } });
+      const token = jwt.sign({ id: info.lastInsertRowid, username, email, role: 'user' }, JWT_SECRET);
+      res.status(201).json({ token, user: { id: info.lastInsertRowid, username, email, role: 'user' } });
     } catch (error: any) {
       if (error.message.includes("UNIQUE")) {
         return res.status(400).json({ error: "Username or email already exists" });
@@ -146,15 +211,15 @@ async function startServer() {
   });
 
   app.post("/api/auth/login", async (req, res) => {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body; // changed email to identifier
     try {
-      const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+      const user: any = db.prepare("SELECT * FROM users WHERE email = ? OR username = ?").get(identifier, identifier);
       if (!user || !(await bcrypt.compare(password, user.password))) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      const token = jwt.sign({ id: user.id, username: user.username, email: user.email }, JWT_SECRET);
-      res.json({ token, user: { id: user.id, username: user.username, email: user.email, is_public: user.is_public } });
+      const token = jwt.sign({ id: user.id, username: user.username, email: user.email, role: user.role }, JWT_SECRET);
+      res.json({ token, user: { id: user.id, username: user.username, email: user.email, is_public: user.is_public, role: user.role } });
     } catch (error) {
       res.status(500).json({ error: "Login failed" });
     }
@@ -169,6 +234,19 @@ async function startServer() {
     res.json({ message: "If an account exists, a reset link has been sent (Mocked)" });
   });
 
+  app.post("/api/auth/reset-password", authenticateToken, async (req: any, res) => {
+    const { newPassword } = req.body;
+    if (!newPassword) return res.status(400).json({ error: "New password required" });
+    
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashedPassword, req.user.id);
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
   // Jobs Routes
   app.get("/api/jobs", (req, res) => {
     try {
@@ -180,7 +258,7 @@ async function startServer() {
   });
 
   app.post("/api/jobs", authenticateToken, (req: any, res) => {
-    const { title, company, category, location, experience, salary, requirements, link, posted_by } = req.body;
+    const { title, company, category, location, experience, salary, requirements, link, link_type, posted_by } = req.body;
     
     if (!title || !company || !category || !link || !posted_by) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -188,9 +266,9 @@ async function startServer() {
 
     try {
       const stmt = db.prepare(
-        "INSERT INTO jobs (title, company, category, location, experience, salary, requirements, link, posted_by, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO jobs (title, company, category, location, experience, salary, requirements, link, link_type, posted_by, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
       );
-      const info = stmt.run(title, company, category, location, experience, salary, requirements, link, posted_by, req.user.id);
+      const info = stmt.run(title, company, category, location, experience, salary, requirements, link, link_type || 'Other', posted_by, req.user.id);
       res.status(201).json({ id: info.lastInsertRowid, ...req.body });
     } catch (error) {
       res.status(500).json({ error: "Failed to post job" });
@@ -200,7 +278,7 @@ async function startServer() {
   // Profile Routes
   app.get("/api/profile/me", authenticateToken, (req: any, res) => {
     try {
-      const profile = db.prepare("SELECT p.*, u.email, u.username, u.is_public FROM profiles p JOIN users u ON p.user_id = u.id WHERE p.user_id = ?").get(req.user.id);
+      const profile = db.prepare("SELECT p.*, u.email, u.username, u.is_public, u.role FROM profiles p JOIN users u ON p.user_id = u.id WHERE p.user_id = ?").get(req.user.id);
       res.json(profile);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch profile" });
@@ -235,6 +313,75 @@ async function startServer() {
     } catch (error) {
       console.error("Update profile error:", error);
       res.status(500).json({ error: "Failed to update profile" });
+    }
+  });
+
+  // Admin Routes
+  app.get("/api/admin/users", authenticateAdmin, (req, res) => {
+    try {
+      const users = db.prepare("SELECT id, username, email, role, is_suspended, created_at FROM users").all();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/suspend", authenticateAdmin, (req, res) => {
+    const { is_suspended } = req.body;
+    try {
+      db.prepare("UPDATE users SET is_suspended = ? WHERE id = ?").run(is_suspended ? 1 : 0, req.params.id);
+      res.json({ message: `User ${is_suspended ? 'suspended' : 'unsuspended'}` });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user status" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", authenticateAdmin, (req, res) => {
+    try {
+      db.prepare("DELETE FROM profiles WHERE user_id = ?").run(req.params.id);
+      db.prepare("DELETE FROM jobs WHERE user_id = ?").run(req.params.id);
+      db.prepare("DELETE FROM users WHERE id = ?").run(req.params.id);
+      res.json({ message: "User deleted" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/reset-password", authenticateAdmin, async (req, res) => {
+    const { newPassword } = req.body;
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      db.prepare("UPDATE users SET password = ? WHERE id = ?").run(hashedPassword, req.params.id);
+      res.json({ message: "Password reset successful" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
+  app.delete("/api/admin/jobs/:id", authenticateAdmin, (req, res) => {
+    try {
+      db.prepare("DELETE FROM jobs WHERE id = ?").run(req.params.id);
+      res.json({ message: "Job posting removed" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to remove job posting" });
+    }
+  });
+
+  app.get("/api/admin/stats", authenticateAdmin, (req, res) => {
+    try {
+      const totalUsers = db.prepare("SELECT COUNT(*) as count FROM users").get() as any;
+      const totalJobs = db.prepare("SELECT COUNT(*) as count FROM jobs").get() as any;
+      const suspendedUsers = db.prepare("SELECT COUNT(*) as count FROM users WHERE is_suspended = 1").get() as any;
+      const recentJobs = db.prepare("SELECT COUNT(*) as count FROM jobs WHERE created_at > datetime('now', '-7 days')").get() as any;
+      
+      res.json({
+        totalUsers: totalUsers.count,
+        totalJobs: totalJobs.count,
+        suspendedUsers: suspendedUsers.count,
+        recentJobs: recentJobs.count
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch stats" });
     }
   });
 
