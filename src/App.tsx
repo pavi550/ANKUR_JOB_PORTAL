@@ -61,6 +61,7 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [magicLink, setMagicLink] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -116,6 +117,12 @@ export default function App() {
       fetchMyProfile();
     }
   }, [token]);
+
+  useEffect(() => {
+    if (user) {
+      setNewJob(prev => ({ ...prev, posted_by: user.username }));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -453,6 +460,13 @@ export default function App() {
       setIsAuthModalOpen(true);
       return;
     }
+
+    if (!newJob.title || !newJob.company || !newJob.link) {
+      alert("Please fill in all required fields (Title, Company, and Link).");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const response = await fetch("/api/jobs", {
         method: "POST",
@@ -462,6 +476,9 @@ export default function App() {
         },
         body: JSON.stringify(newJob),
       });
+      
+      const data = await response.json();
+      
       if (response.ok) {
         fetchJobs();
         setIsModalOpen(false);
@@ -478,9 +495,15 @@ export default function App() {
           posted_by: user?.username || "",
         });
         setMagicLink("");
+        alert("Job posted successfully!");
+      } else {
+        alert(data.error || "Failed to post job. Please try again.");
       }
     } catch (error) {
       console.error("Error posting job:", error);
+      alert("An error occurred while posting the job.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -604,9 +627,13 @@ export default function App() {
           link: magicLink,
           link_type: detectLinkType(magicLink)
         }));
+        alert("Details extracted successfully! Please review and complete the form.");
+      } else {
+        alert("Could not extract clear job details from this link. Please fill in the details manually.");
       }
     } catch (error) {
       console.error("Extraction failed:", error);
+      alert("Extraction failed. The link might be private or restricted. Please fill in the details manually.");
     } finally {
       setIsExtracting(false);
     }
@@ -1337,10 +1364,10 @@ export default function App() {
 
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   className="w-full btn-primary py-5 rounded-2xl text-lg font-bold shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-3"
                 >
-                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Plus size={22} /> Post Job Opening</>}
+                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Plus size={22} /> Post Job Opening</>}
                 </button>
               </form>
             </motion.div>
