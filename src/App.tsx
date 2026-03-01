@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff, Globe, Linkedin, Github, GraduationCap, Phone, Camera, Upload, Twitter, Instagram, Shield, Trash2, Ban, RefreshCw, CheckCircle2, Users, TrendingUp } from "lucide-react";
+import { Plus, ExternalLink, Filter, Briefcase, Building2, User, Calendar, X, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Sparkles, Loader2, MapPin, DollarSign, Award, FileText, Mail, Save, LogIn, LogOut, UserPlus, Lock, Eye, EyeOff, Globe, Linkedin, Github, GraduationCap, Phone, Camera, Upload, Twitter, Instagram, Shield, Trash2, Ban, RefreshCw, CheckCircle2, Users, TrendingUp, Link2Off, Eraser } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GoogleGenAI } from "@google/genai";
 
@@ -69,6 +69,7 @@ export default function App() {
   const [adminStats, setAdminStats] = useState<any>(null);
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"user" | "admin">("user");
+  const [adminSubTab, setAdminSubTab] = useState<"users" | "jobs">("users");
   const [isSelfResetModalOpen, setIsSelfResetModalOpen] = useState(false);
   const [selfResetPassword, setSelfResetPassword] = useState("");
 
@@ -77,7 +78,7 @@ export default function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register" | "forgot">("login");
-  const [authForm, setAuthForm] = useState({ username: "", email: "", password: "" });
+  const [authForm, setAuthForm] = useState({ username: "", email: "", password: "", phone: "" });
 
   const [profile, setProfile] = useState<Profile>({
     name: "",
@@ -145,7 +146,7 @@ export default function App() {
         setUser(data.user);
         localStorage.setItem("token", data.token);
         setIsAuthModalOpen(false);
-        setAuthForm({ username: "", email: "", password: "" });
+        setAuthForm({ username: "", email: "", password: "", phone: "" });
       } else {
         alert(data.error);
       }
@@ -231,6 +232,38 @@ export default function App() {
     } catch (error) {
       console.error("Upload error:", error);
       alert("An error occurred during upload");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+
+    const formData = new FormData();
+    formData.append("photo", file);
+
+    setIsUploading(true);
+    try {
+      const response = await fetch("/api/upload/photo", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile({ ...profile, photo_url: data.url });
+      } else {
+        const error = await response.json();
+        alert(error.error || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Photo upload error:", error);
+      alert("An error occurred during photo upload");
     } finally {
       setIsUploading(false);
     }
@@ -344,6 +377,38 @@ export default function App() {
     } catch (error) {
       console.error("Error resetting password:", error);
       alert("An error occurred");
+    }
+  };
+
+  const handleClearSocials = async (userId: number) => {
+    if (!token || !confirm("Are you sure you want to remove all social media links for this user?")) return;
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/clear-socials`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (response.ok) {
+        alert("Social links removed");
+        fetchAdminUsers();
+      }
+    } catch (error) {
+      console.error("Error clearing socials:", error);
+    }
+  };
+
+  const handleClearProfile = async (userId: number) => {
+    if (!token || !confirm("Are you sure you want to clear this user's profile content (skills, experience, etc.)? This is used to remove spam/abusive content.")) return;
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/clear-profile`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (response.ok) {
+        alert("Profile content cleared");
+        fetchAdminUsers();
+      }
+    } catch (error) {
+      console.error("Error clearing profile:", error);
     }
   };
 
@@ -737,88 +802,161 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-black/5">
-                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Joined</th>
-                      <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-black/5">
-                    {adminUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                              {u.username[0].toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-bold text-gray-900">{u.username}</div>
-                              <div className="text-xs text-gray-500">{u.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-                            {u.role}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {u.is_suspended ? (
-                            <span className="flex items-center gap-1 text-red-500 text-xs font-bold">
-                              <Ban size={12} />
-                              Suspended
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-emerald-500 text-xs font-bold">
-                              <CheckCircle2 size={12} />
-                              Active
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(u.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleResetPassword(u.id)}
-                              className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                              title="Reset Password"
-                            >
-                              <RefreshCw size={16} />
-                            </button>
-                            {u.role !== 'admin' && (
-                              <>
-                                <button
-                                  onClick={() => handleSuspendUser(u.id, u.is_suspended)}
-                                  className={`p-2 rounded-lg transition-all ${u.is_suspended ? 'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50' : 'text-orange-400 hover:text-orange-600 hover:bg-orange-50'}`}
-                                  title={u.is_suspended ? "Unsuspend User" : "Suspend User"}
-                                >
-                                  <Ban size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteUser(u.id)}
-                                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                  title="Delete User"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="flex items-center gap-4 border-b border-black/5">
+              <button
+                onClick={() => setAdminSubTab("users")}
+                className={`pb-4 px-2 text-sm font-bold transition-all relative ${adminSubTab === "users" ? "text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                Users Management
+                {adminSubTab === "users" && <motion.div layoutId="adminSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
+              </button>
+              <button
+                onClick={() => setAdminSubTab("jobs")}
+                className={`pb-4 px-2 text-sm font-bold transition-all relative ${adminSubTab === "jobs" ? "text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}
+              >
+                Jobs Moderation
+                {adminSubTab === "jobs" && <motion.div layoutId="adminSubTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
+              </button>
             </div>
+
+            {adminSubTab === "users" ? (
+              <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-black/5">
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">User</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Joined</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/5">
+                      {adminUsers.map((u) => (
+                        <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                                {u.username[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-bold text-gray-900">{u.username}</div>
+                                <div className="text-xs text-gray-500">{u.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {u.is_suspended ? (
+                              <span className="flex items-center gap-1 text-red-500 text-xs font-bold">
+                                <Ban size={12} />
+                                Suspended
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-emerald-500 text-xs font-bold">
+                                <CheckCircle2 size={12} />
+                                Active
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {new Date(u.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleResetPassword(u.id)}
+                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                title="Reset Password"
+                              >
+                                <Lock size={16} />
+                              </button>
+                              {u.role !== 'admin' && (
+                                <>
+                                  <button
+                                    onClick={() => handleClearSocials(u.id)}
+                                    className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                                    title="Remove Social Links"
+                                  >
+                                    <Link2Off size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleClearProfile(u.id)}
+                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                    title="Clear Profile (Spam/Abuse)"
+                                  >
+                                    <Eraser size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleSuspendUser(u.id, u.is_suspended)}
+                                    className={`p-2 rounded-lg transition-all ${u.is_suspended ? 'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50' : 'text-orange-400 hover:text-orange-600 hover:bg-orange-50'}`}
+                                    title={u.is_suspended ? "Unsuspend User" : "Suspend User"}
+                                  >
+                                    <Ban size={16} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteUser(u.id)}
+                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                    title="Delete User"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl border border-black/5 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-black/5">
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Job Title</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Company</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Posted By</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
+                        <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/5">
+                      {jobs.map((job) => (
+                        <tr key={job.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-gray-900">{job.title}</div>
+                            <div className="text-xs text-gray-500">{job.category}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{job.company}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{job.posted_by}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {new Date(job.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              onClick={() => handleRemoveJob(job.id)}
+                              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                              title="Remove Job"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         ) : activeTab === "jobs" ? (
           <>
@@ -1298,16 +1436,37 @@ export default function App() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Photo URL</label>
-                      <div className="relative">
-                        <Camera className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <input
-                          type="url"
-                          placeholder="https://..."
-                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                          value={profile.photo_url}
-                          onChange={(e) => setProfile({ ...profile, photo_url: e.target.value })}
-                        />
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Photo</label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
+                          {profile.photo_url ? (
+                            <img src={profile.photo_url} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                              <Camera size={20} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex gap-2">
+                            <label className="cursor-pointer px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition-all flex items-center gap-2">
+                              <Upload size={14} />
+                              {profile.photo_url ? "Change Photo" : "Upload Photo"}
+                              <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploading} />
+                            </label>
+                            {profile.photo_url && (
+                              <button
+                                type="button"
+                                onClick={() => setProfile({ ...profile, photo_url: "" })}
+                                className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-semibold hover:bg-red-100 transition-all flex items-center gap-2"
+                              >
+                                <Trash2 size={14} />
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-1.5 uppercase tracking-wider font-bold">Optional: Square images work best</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1519,20 +1678,35 @@ export default function App() {
 
               <form onSubmit={handleAuth} className="space-y-4">
                 {authMode === "register" && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <input
-                        required
-                        type="text"
-                        placeholder="johndoe"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                        value={authForm.username}
-                        onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
-                      />
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username</label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          required
+                          type="text"
+                          placeholder="johndoe"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={authForm.username}
+                          onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
+                        />
+                      </div>
                     </div>
-                  </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="tel"
+                          placeholder="+1234567890"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                          value={authForm.phone}
+                          onChange={(e) => setAuthForm({ ...authForm, phone: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </>
                 )}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">

@@ -34,12 +34,12 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = [".pdf", ".doc", ".docx"];
+    const allowedTypes = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".gif", ".webp"];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error("Only .pdf, .doc and .docx files are allowed"));
+      cb(new Error("File type not allowed"));
     }
   },
 });
@@ -51,6 +51,7 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    phone TEXT,
     role TEXT DEFAULT 'user',
     is_suspended INTEGER DEFAULT 0,
     is_public INTEGER DEFAULT 1,
@@ -105,6 +106,9 @@ if (!columnNames.includes("is_suspended")) {
 }
 if (!columnNames.includes("is_public")) {
   db.exec("ALTER TABLE users ADD COLUMN is_public INTEGER DEFAULT 1");
+}
+if (!columnNames.includes("phone")) {
+  db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
 }
 
 // Migration for jobs table
@@ -176,8 +180,16 @@ async function startServer() {
     }
   }
 
-  // Upload Route
+  // Upload Routes
   app.post("/api/upload/resume", authenticateToken, upload.single("resume"), (req: any, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl });
+  });
+
+  app.post("/api/upload/photo", authenticateToken, upload.single("photo"), (req: any, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
@@ -187,15 +199,15 @@ async function startServer() {
 
   // Auth Routes
   app.post("/api/auth/register", async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, phone } = req.body;
     if (!username || !email || !password) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
-      const stmt = db.prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-      const info = stmt.run(username, email, hashedPassword);
+      const stmt = db.prepare("INSERT INTO users (username, email, password, phone) VALUES (?, ?, ?, ?)");
+      const info = stmt.run(username, email, hashedPassword, phone || null);
       
       // Create initial profile
       db.prepare("INSERT INTO profiles (user_id, name) VALUES (?, ?)").run(info.lastInsertRowid, username);
@@ -364,6 +376,68 @@ async function startServer() {
       res.json({ message: "Job posting removed" });
     } catch (error) {
       res.status(500).json({ error: "Failed to remove job posting" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/clear-socials", authenticateAdmin, (req, res) => {
+    try {
+      db.prepare(`
+        UPDATE profiles 
+        SET linkedin_url = NULL, github_url = NULL, portfolio_url = NULL 
+        WHERE user_id = ?
+      `).run(req.params.id);
+      res.json({ message: "Social links removed" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to clear social links" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/clear-profile", authenticateAdmin, (req, res) => {
+    try {
+      db.prepare(`
+        UPDATE profiles 
+        SET skills = NULL, experience = NULL, education = NULL, contact_details = NULL 
+        WHERE user_id = ?
+      `).run(req.params.id);
+      res.json({ message: "Profile content cleared" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to clear profile content" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/profile", authenticateAdmin, (req, res) => {
+    const { name, email, role, photo_url, contact_details, location, skills, experience, education, resume_url, portfolio_url, linkedin_url, github_url, is_public } = req.body;
+    try {
+      db.prepare(`
+        UPDATE profiles SET 
+          name = ?, photo_url = ?, contact_details = ?, location = ?, 
+          skills = ?, experience = ?, education = ?, resume_url = ?, 
+          portfolio_url = ?, linkedin_url = ?, github_url = ?, is_public = ?
+        WHERE user_id = ?
+      `).run(name, photo_url, contact_details, location, skills, experience, education, resume_url, portfolio_url, linkedin_url, github_url, is_public ? 1 : 0, req.params.id);
+      
+      if (email || role) {
+        db.prepare("UPDATE users SET email = ?, role = ? WHERE id = ?").run(email, role, req.params.id);
+      }
+      
+      res.json({ message: "User profile updated by admin" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user profile" });
+    }
+  });
+
+  app.put("/api/admin/jobs/:id", authenticateAdmin, (req, res) => {
+    const { title, company, location, category, experience, salary, requirements, link, link_type } = req.body;
+    try {
+      db.prepare(`
+        UPDATE jobs SET 
+          title = ?, company = ?, location = ?, category = ?, 
+          experience = ?, salary = ?, requirements = ?, link = ?, link_type = ?
+        WHERE id = ?
+      `).run(title, company, location, category, experience, salary, requirements, link, link_type, req.params.id);
+      res.json({ message: "Job updated by admin" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update job" });
     }
   });
 
